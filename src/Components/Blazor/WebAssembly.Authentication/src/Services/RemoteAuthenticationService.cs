@@ -24,7 +24,8 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
          where TRemoteAuthenticationState : RemoteAuthenticationState
          where TProviderOptions : new()
     {
-        private const int _userCacheRefreshInterval = 60;
+        private static readonly TimeSpan _userCacheRefreshInterval = TimeSpan.FromSeconds(60);
+
         private bool _initialized = false;
 
         // This defaults to 1/1/1970
@@ -126,9 +127,9 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
             await EnsureAuthService();
             var result = await _jsRuntime.InvokeAsync<InternalAccessTokenResult>("AuthenticationService.getAccessToken");
 
-            var redirectUrl = GetRedirectUrl(null);
             if (string.Equals(result.Status, AccessTokenResultStatus.RequiresRedirect, StringComparison.OrdinalIgnoreCase))
             {
+                var redirectUrl = GetRedirectUrl(null);
                 result.RedirectUrl = redirectUrl.ToString();
             }
 
@@ -146,9 +147,9 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
             await EnsureAuthService();
             var result = await _jsRuntime.InvokeAsync<InternalAccessTokenResult>("AuthenticationService.getAccessToken", options);
 
-            var redirectUrl = GetRedirectUrl(options?.ReturnUrl);
             if (string.Equals(result.Status, AccessTokenResultStatus.RequiresRedirect, StringComparison.OrdinalIgnoreCase))
             {
+                var redirectUrl = GetRedirectUrl(options.ReturnUrl);
                 result.RedirectUrl = redirectUrl.ToString();
             }
 
@@ -166,7 +167,7 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
         private async ValueTask<ClaimsPrincipal> GetUser(bool useCache = false)
         {
             var now = DateTimeOffset.Now;
-            if (useCache && now < _userLastCheck.AddSeconds(_userCacheRefreshInterval))
+            if (useCache && now < _userLastCheck + _userCacheRefreshInterval)
             {
                 return _cachedUser;
             }

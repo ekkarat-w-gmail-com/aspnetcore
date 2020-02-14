@@ -12,6 +12,12 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
     {
         private AccessToken _token;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="AccessTokenResult"/>.
+        /// </summary>
+        /// <param name="status">The status of the result.</param>
+        /// <param name="token">The <see cref="AccessToken"/> in case it was successful.</param>
+        /// <param name="redirectUrl">The redirect uri to go to for provisioning the token.</param>
         public AccessTokenResult(string status, AccessToken token, string redirectUrl)
         {
             Status = status;
