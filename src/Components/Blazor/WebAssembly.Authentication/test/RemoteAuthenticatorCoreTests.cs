@@ -56,7 +56,7 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
             await renderer.Dispatcher.InvokeAsync<object>(() => remoteAuthenticator.SetParametersAsync(parameters));
 
             // Assert
-            Assert.Equal("https://www.example.com/base/fetchData", remoteAuthenticator.Navigation.Uri);
+            Assert.Equal("https://www.example.com/base/fetchData", jsRuntime.LastInvocation.args[0]);
         }
 
         [Fact]
@@ -109,7 +109,7 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
             // Assert
             Assert.Equal(
                 "https://www.example.com/base/authentication/login-failed?message=There was an error trying to log in",
-                remoteAuthenticator.Navigation.Uri);
+                jsRuntime.LastInvocation.args[0]);
 
         }
 
@@ -220,7 +220,7 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
             // Assert
             Assert.Equal(
                 "https://www.example.com/base/authentication/login-failed?message=There was an error trying to log in",
-                remoteAuthenticator.Navigation.Uri);
+                jsRuntime.LastInvocation.args[0]);
 
         }
 
@@ -358,7 +358,7 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
             // Assert
             Assert.Equal(
                 "https://www.example.com/base/authentication/logout-failed?message=There was an error trying to log out",
-                remoteAuthenticator.Navigation.Uri);
+                jsRuntime.LastInvocation.args[0]);
         }
 
         [Fact]
@@ -468,7 +468,7 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
             // Assert
             Assert.Equal(
                 "https://www.example.com/base/authentication/logout-failed?message=There was an error trying to log out",
-                remoteAuthenticator.Navigation.Uri);
+                jsRuntime.LastInvocation.args[0]);
 
         }
 

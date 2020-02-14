@@ -219,11 +219,11 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
                 case RemoteAuthenticationStatus.Redirect:
                     break;
                 case RemoteAuthenticationStatus.Success:
-                    Navigation.NavigateTo(returnUrl);
+                    await NavigateToReturnUrl(returnUrl);
                     break;
                 case RemoteAuthenticationStatus.Failure:
                     var uri = Navigation.ToAbsoluteUri($"{ApplicationPaths.LogInFailedPath}?message={Uri.EscapeDataString(result.ErrorMessage)}").ToString();
-                    Navigation.NavigateTo(uri);
+                    await NavigateToReturnUrl(uri);
                     break;
                 case RemoteAuthenticationStatus.OperationCompleted:
                 default:
@@ -248,7 +248,7 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
                     break;
                 case RemoteAuthenticationStatus.Failure:
                     var uri = Navigation.ToAbsoluteUri($"{ApplicationPaths.LogInFailedPath}?message={Uri.EscapeDataString(result.ErrorMessage)}").ToString();
-                    Navigation.NavigateTo(uri);
+                    await NavigateToReturnUrl(uri);
                     break;
                 default:
                     throw new InvalidOperationException($"Invalid authentication result status '{result.Status}'.");
@@ -283,7 +283,7 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
                         break;
                     case RemoteAuthenticationStatus.Failure:
                         var uri = Navigation.ToAbsoluteUri($"{ApplicationPaths.LogOutFailedPath}?message={Uri.EscapeDataString(result.ErrorMessage)}").ToString();
-                        Navigation.NavigateTo(uri);
+                        await NavigateToReturnUrl(uri);
                         break;
                     default:
                         throw new InvalidOperationException($"Invalid authentication result status '{result.Status ?? "(null)"}'.");
@@ -291,7 +291,7 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
             }
             else
             {
-                Navigation.NavigateTo(returnUrl);
+                await NavigateToReturnUrl(returnUrl);
             }
         }
 
@@ -311,7 +311,7 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
                     break;
                 case RemoteAuthenticationStatus.Failure:
                     var uri = Navigation.ToAbsoluteUri($"{ApplicationPaths.LogOutFailedPath}?message={Uri.EscapeDataString(result.ErrorMessage)}").ToString();
-                    Navigation.NavigateTo(uri);
+                    await NavigateToReturnUrl(uri);
                     break;
                 default:
                     throw new InvalidOperationException($"Invalid authentication result status '{result.Status ?? "(null)"}'.");
@@ -403,7 +403,7 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
             return null;
         }
 
-        private async Task NavigateToReturnUrl(string returnUrl) => await JS.InvokeVoidAsync("location.replace", returnUrl);
+        private async Task NavigateToReturnUrl(string returnUrl) => await JS.InvokeVoidAsync("Blazor.navigateTo", returnUrl, false, true);
 
         private ValueTask RedirectToRegister()
         {
