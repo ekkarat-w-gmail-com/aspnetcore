@@ -44,13 +44,13 @@
     {
         await base.OnInitializedAsync();
         var state = await AuthenticationState;
-        var accessTokenResult = await AuthorizationService.GetAccessToken();
-        if (accessTokenResult.Status != AccessTokenResultStatus.Success)
+        var accessTokenResult = await AuthorizationService.RequestAccessToken();
+        if (!accessTokenResult.TryGetToken(out var token))
         {
             throw new InvalidOperationException("Failed to provision the access token.");
         }
 
-        AccessToken = accessTokenResult.Token;
+        AccessToken = token;
 
         AuthenticatedUser = state.User;
     }

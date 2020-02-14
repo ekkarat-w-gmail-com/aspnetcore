@@ -10,7 +10,7 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
     /// Represents a contract for services that perform authentication operations for a Blazor WebAssembly application.
     /// </summary>
     /// <typeparam name="TRemoteAuthenticationState">The state to be persisted across authentication operations.</typeparam>
-    public interface IRemoteAuthenticationService<TRemoteAuthenticationState> : IAccessTokenProvider
+    public interface IRemoteAuthenticationService<TRemoteAuthenticationState>
         where TRemoteAuthenticationState : RemoteAuthenticationState
     {
         /// <summary>

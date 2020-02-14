@@ -17,7 +17,10 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
     /// </summary>
     /// <typeparam name="TRemoteAuthenticationState">The state to preserve across authentication operations.</typeparam>
     /// <typeparam name="TProviderOptions">The options to be passed down to the underlying JavaScript library handling the authentication operations.</typeparam>
-    public class RemoteAuthenticationService<TRemoteAuthenticationState, TProviderOptions> : AuthenticationStateProvider, IRemoteAuthenticationService<TRemoteAuthenticationState>
+    public class RemoteAuthenticationService<TRemoteAuthenticationState, TProviderOptions> :
+        AuthenticationStateProvider,
+        IRemoteAuthenticationService<TRemoteAuthenticationState>,
+        IAccessTokenProvider
          where TRemoteAuthenticationState : RemoteAuthenticationState
          where TProviderOptions : new()
     {
@@ -118,14 +121,22 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
         }
 
         /// <inheritdoc />
-        public virtual async ValueTask<AccessTokenResult> GetAccessToken()
+        public virtual async ValueTask<AccessTokenResult> RequestAccessToken()
         {
             await EnsureAuthService();
-            return await _jsRuntime.InvokeAsync<AccessTokenResult>("AuthenticationService.getAccessToken");
+            var result = await _jsRuntime.InvokeAsync<InternalAccessTokenResult>("AuthenticationService.getAccessToken");
+
+            var redirectUrl = GetRedirectUrl(null);
+            if (string.Equals(result.Status, AccessTokenResultStatus.RequiresRedirect, StringComparison.OrdinalIgnoreCase))
+            {
+                result.RedirectUrl = redirectUrl.ToString();
+            }
+
+            return new AccessTokenResult(result.Status, result.Token, result.RedirectUrl);
         }
 
         /// <inheritdoc />
-        public virtual async ValueTask<AccessTokenResult> GetAccessToken(AccessTokenRequestOptions options)
+        public virtual async ValueTask<AccessTokenResult> RequestAccessToken(AccessTokenRequestOptions options)
         {
             if (options is null)
             {
@@ -133,18 +144,23 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
             }
 
             await EnsureAuthService();
-            var result = await _jsRuntime.InvokeAsync<AccessTokenResult>("AuthenticationService.getAccessToken", options);
+            var result = await _jsRuntime.InvokeAsync<InternalAccessTokenResult>("AuthenticationService.getAccessToken", options);
 
-            var returnUrl = options.ReturnUrl != null ? _navigation.ToAbsoluteUri(options.ReturnUrl).ToString() : null;
-            var encodedReturnUrl = Uri.EscapeDataString(returnUrl ?? _navigation.Uri);
-            var redirectUrl = _navigation.ToAbsoluteUri($"{_options.AuthenticationPaths.LogInPath}?returnUrl={encodedReturnUrl}");
-
+            var redirectUrl = GetRedirectUrl(options?.ReturnUrl);
             if (string.Equals(result.Status, AccessTokenResultStatus.RequiresRedirect, StringComparison.OrdinalIgnoreCase))
             {
                 result.RedirectUrl = redirectUrl.ToString();
             }
 
-            return result;
+            return new AccessTokenResult(result.Status, result.Token, result.RedirectUrl);
+        }
+
+        private Uri GetRedirectUrl(string customReturnUrl)
+        {
+            var returnUrl = customReturnUrl != null ? _navigation.ToAbsoluteUri(customReturnUrl).ToString() : null;
+            var encodedReturnUrl = Uri.EscapeDataString(returnUrl ?? _navigation.Uri);
+            var redirectUrl = _navigation.ToAbsoluteUri($"{_options.AuthenticationPaths.LogInPath}?returnUrl={encodedReturnUrl}");
+            return redirectUrl;
         }
 
         private async ValueTask<ClaimsPrincipal> GetUser(bool useCache = false)
@@ -216,5 +232,13 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
             static async Task<AuthenticationState> UpdateAuthenticationState(ValueTask<ClaimsPrincipal> futureUser) => new AuthenticationState(await futureUser);
         }
+    }
+
+    // Internal for testing purposes
+    internal struct InternalAccessTokenResult
+    {
+        public string Status { get; set; }
+        public AccessToken Token { get; set; }
+        public string RedirectUrl { get; set; }
     }
 }

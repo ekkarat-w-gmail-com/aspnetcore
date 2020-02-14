@@ -45,11 +45,11 @@ else
         var httpClient = new HttpClient();
         httpClient.BaseAddress = new Uri(Navigation.BaseUri);
 
-        var tokenResult = await AuthenticationService.GetAccessToken();
+        var tokenResult = await AuthenticationService.RequestAccessToken();
 
-        if (tokenResult.TryGetAccessToken(out var token))
+        if (tokenResult.TryGetToken(out var token))
         {
-            httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {tokenResult.Token.Value}");
+            httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token.Value}");
             forecasts = await httpClient.GetJsonAsync<WeatherForecast[]>("WeatherForecast");
         }
         else

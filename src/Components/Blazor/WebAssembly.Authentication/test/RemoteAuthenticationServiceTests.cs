@@ -248,7 +248,7 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
                 new TestNavigationManager());
 
             var state = new RemoteAuthenticationState();
-            testJsRuntime.GetAccessTokenResult = new AccessTokenResult
+            testJsRuntime.GetAccessTokenResult = new InternalAccessTokenResult
             {
                 Status = AccessTokenResultStatus.Success,
                 Token = new AccessToken
@@ -260,14 +260,17 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
             };
 
             // Act
-            var result = await runtime.GetAccessToken();
+            var result = await runtime.RequestAccessToken();
 
             // Assert
             Assert.Equal(
                 new[] { "AuthenticationService.init", "AuthenticationService.getAccessToken" },
                 testJsRuntime.PastInvocations.Select(i => i.identifier).ToArray());
 
-            Assert.Equal(result, testJsRuntime.GetAccessTokenResult);
+            Assert.True(result.TryGetToken(out var token));
+            Assert.Equal(result.Status, testJsRuntime.GetAccessTokenResult.Status);
+            Assert.Equal(result.RedirectUrl, testJsRuntime.GetAccessTokenResult.RedirectUrl);
+            Assert.Equal(token, testJsRuntime.GetAccessTokenResult.Token);
         }
 
         [Fact]
@@ -282,7 +285,7 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
                 new TestNavigationManager());
 
             var state = new RemoteAuthenticationState();
-            testJsRuntime.GetAccessTokenResult = new AccessTokenResult
+            testJsRuntime.GetAccessTokenResult = new InternalAccessTokenResult
             {
                 Status = AccessTokenResultStatus.RequiresRedirect,
             };
@@ -295,14 +298,16 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
             var expectedRedirectUrl = "https://www.example.com/base/login?returnUrl=https%3A%2F%2Fwww.example.com%2Fbase%2Fadd-product";
 
             // Act
-            var result = await runtime.GetAccessToken(tokenOptions);
+            var result = await runtime.RequestAccessToken(tokenOptions);
 
             // Assert
             Assert.Equal(
                 new[] { "AuthenticationService.init", "AuthenticationService.getAccessToken" },
                 testJsRuntime.PastInvocations.Select(i => i.identifier).ToArray());
 
-            Assert.Equal(result, testJsRuntime.GetAccessTokenResult);
+            Assert.False(result.TryGetToken(out var token));
+            Assert.Null(token);
+            Assert.Equal(result.Status, testJsRuntime.GetAccessTokenResult.Status);
             Assert.Equal(expectedRedirectUrl, result.RedirectUrl);
             Assert.Equal(tokenOptions, (AccessTokenRequestOptions)testJsRuntime.PastInvocations[^1].args[0]);
         }
@@ -319,7 +324,7 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
                 new TestNavigationManager());
 
             var state = new RemoteAuthenticationState();
-            testJsRuntime.GetAccessTokenResult = new AccessTokenResult
+            testJsRuntime.GetAccessTokenResult = new InternalAccessTokenResult
             {
                 Status = AccessTokenResultStatus.RequiresRedirect,
             };
@@ -333,14 +338,16 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
             var expectedRedirectUrl = "https://www.example.com/base/login?returnUrl=https%3A%2F%2Fwww.example.com%2Fbase%2Fadd-saved-product%2F123413241234";
 
             // Act
-            var result = await runtime.GetAccessToken(tokenOptions);
+            var result = await runtime.RequestAccessToken(tokenOptions);
 
             // Assert
             Assert.Equal(
                 new[] { "AuthenticationService.init", "AuthenticationService.getAccessToken" },
                 testJsRuntime.PastInvocations.Select(i => i.identifier).ToArray());
 
-            Assert.Equal(result, testJsRuntime.GetAccessTokenResult);
+            Assert.False(result.TryGetToken(out var token));
+            Assert.Null(token);
+            Assert.Equal(result.Status, testJsRuntime.GetAccessTokenResult.Status);
             Assert.Equal(expectedRedirectUrl, result.RedirectUrl);
             Assert.Equal(tokenOptions, (AccessTokenRequestOptions)testJsRuntime.PastInvocations[^1].args[0]);
         }
@@ -423,7 +430,7 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
             }, serializationOptions);
 
             testJsRuntime.GetUserResult = JsonSerializer.Deserialize<IDictionary<string, object>>(serializedUser);
-            testJsRuntime.GetAccessTokenResult = new AccessTokenResult
+            testJsRuntime.GetAccessTokenResult = new InternalAccessTokenResult
             {
                 Status = AccessTokenResultStatus.Success,
                 Token = new AccessToken
@@ -499,7 +506,7 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
             public RemoteAuthenticationResult<RemoteAuthenticationState> InitResult { get; set; }
 
-            public AccessTokenResult GetAccessTokenResult { get; set; }
+            public InternalAccessTokenResult GetAccessTokenResult { get; set; }
 
             public IDictionary<string, object> GetUserResult { get; set; }
 
